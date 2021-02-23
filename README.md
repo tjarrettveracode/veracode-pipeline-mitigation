@@ -38,4 +38,4 @@ Arguments supported include:
 * `--sandbox`, `-s` (optional): Sandbox guid to which to apply mitigation in the application specified above.
 * `--dry_run`, `-d` (optional): if set, generates mitigation proposals in a JSON script instead of executing the mitigation calls.
 
-When run in `--dry_run` mode, a set of JSON objects are written to vcpipmit.txt. All actions are logged to vcpipmit.log.
+When run in `--dry_run` mode, no mitigations are processed, but the JSON payload for the Annotations API is written to `vcpipemit.md`. All actions are logged to `vcpipmit.log`.
