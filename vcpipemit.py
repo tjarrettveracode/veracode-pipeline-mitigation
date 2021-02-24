@@ -30,7 +30,9 @@ def get_app_findings(appguid,sandboxguid=None):
     print(status)
     log.info(status)
 
-    all_findings = Findings().get_findings(appguid) # update to do by severity and policy status
+    request_params = {'scan_type': 'STATIC'}
+
+    all_findings = Findings().get_findings(app=appguid,request_params=request_params, sandbox=sandboxguid)
 
     log.info('Got {} findings for app guid {} and sandbox guid {}'.format(len(all_findings),appguid,sandboxguid))
 
@@ -95,7 +97,7 @@ def process_matched_findings(appguid, matched_findings, baseline_file, sandboxgu
 
     if not(dry_run):
         # add support for mitigating in sandbox
-        Findings().add_annotation(appguid,issues,comment, action)
+        Findings().add_annotation(appguid,issues,comment, action,sandboxguid)
 
     # create markdown file with json payloads
     mdfile = mdu.MdUtils(file_name='vcpipemit.md',title='Veracode Mitigations from Pipeline Scan Baseline')
