@@ -1,6 +1,6 @@
 # Veracode Pipeline Mitigation
 
-Parses a Pipeline Scan baseline file, matches flaws to the given application, and identifies which ones have not yet been mitigated. Can be run in "dry run" mode in which JSON files are generated for the mitigations being proposed, or "hands off" mode in which the mitigations are proposed.  
+Retrieves findings with approved mitigations from an application's policy scan (or sandbox) and creates a baseline file for Pipeline Scan.  
 
 ## Setup
 
@@ -33,9 +33,8 @@ Otherwise you will need to set environment variables:
 
 Arguments supported include:
 
-* `--application`, `-a`  (required): Applications guid to which to apply mitigations.
-* `--baseline_file`, `-bf` (required): Baseline file containing findings that should be mitigated in the application.
-* `--sandbox`, `-s` (optional): Sandbox guid to which to apply mitigation in the application specified above.
-* `--dry_run`, `-d` (optional): if set, generates mitigation proposals in a JSON script instead of executing the mitigation calls.
+* `--application`, `-a`  (required): Applications guid from which to retrieve mitigated findings.
+* `--results`, `-rf` (required): Location of a Pipeline Scan results file from which the baseline file will be created.
+* `--sandbox`, `-s` (optional): Sandbox guid from which to retrieve mitigated findings in the application specified above.
 
-When run in `--dry_run` mode, no mitigations are processed, but the JSON payload for the Annotations API is written to `vcpipemit.md`. All actions are logged to `vcpipmit.log`.
+All actions are logged to `vcpipmit.log`. The baseline file is created in the current directory and is named `baseline_<appguid>.json`.
