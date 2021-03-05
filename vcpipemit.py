@@ -4,10 +4,13 @@ import logging
 import datetime
 import os
 import json
+import uuid
 
 import mdutils.mdutils as mdu
 import anticrlf
 from veracode_api_py import VeracodeAPI as vapi, Applications, Findings
+
+LINE_NUMBER_SLOP = 3 #adjust to allow for line number movement
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +32,13 @@ def creds_expire_days_warning():
 
 def allowed_file(filename):
   return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def is_valid_uuid(uuid_to_test, version=4):
+    try:
+        uuid_obj = UUID(uuid_to_test, version=version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test
 
 def get_app_findings(appguid,sandboxguid=None):
     status = "Getting findings for application {}".format(appguid)
@@ -82,9 +92,12 @@ def get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandbox
     mitigated_index = create_match_format_policy(mitigated_findings)
 
     for thisf in mitigated_index:
+        # we allow for some movement of the line number in the pipeline scan findings relative to the mitigated finding as the code may
+        # have changed. adjust LINE_NUMBER_SLOP for a more or less precise match, but don't broaden too far or you might match the wrong
+        # finding.
         match = next((pf for pf in pipeline_findings if ((thisf['cwe'] == int(pf['cwe_id'])) & 
                (thisf['source_file'].find(pf['files']['source_file']['file']) > -1 ) & 
-               (thisf['line'] == pf['files']['source_file']['line']))), None)
+               ((pf['files']['source_file']['line'] - LINE_NUMBER_SLOP) <= thisf['line'] <= (pf['files']['source_file']['line'] + LINE_NUMBER_SLOP)))), None)
 
         if match != None:
             match['origin'] = { 'source_app': appguid, 'source_id': thisf['id'], 'resolution': thisf['resolution'],'comment': 'Migrated from mitigated policy or sandbox finding'}
@@ -122,6 +135,11 @@ def main():
 
     if not(allowed_file(rf)):
         print('{} is an invalid filename. --results must point to a json file.')
+        return
+
+    if not(is_valid_uuid(appguid)):
+        print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
+        return
 
     all_findings = get_app_findings(appguid,sandboxguid)
 

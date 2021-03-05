@@ -38,3 +38,9 @@ Arguments supported include:
 * `--sandbox`, `-s` (optional): Sandbox guid from which to retrieve mitigated findings in the application specified above.
 
 All actions are logged to `vcpipmit.log`. The baseline file is created in the current directory and is named `baseline_<appguid>.json`.
+
+## Notes
+
+We perform a naïve match between the mitigated findings and the pipeline findings based on CWE ID, source file and line number value. There is some
+"slop" built into the match (checking a range in the pipeline finding around the original mitigated finding); you can adjust the constant
+`LINE_NUMBER_SLOP` to get a more or less precise match.
