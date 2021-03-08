@@ -33,7 +33,8 @@ Otherwise you will need to set environment variables:
 
 Arguments supported include:
 
-* `--application`, `-a`  (required): Applications guid from which to retrieve mitigated findings.
+* `--application`, `-a`  (required if `--prompt` not used): Applications guid from which to retrieve mitigated findings.
+* `--prompt`, `-p` (optional): Specify to be prompted to search by application name.
 * `--results`, `-rf` (required): Location of a Pipeline Scan results file from which the baseline file will be created.
 * `--sandbox`, `-s` (optional): Sandbox guid from which to retrieve mitigated findings in the application specified above.
 

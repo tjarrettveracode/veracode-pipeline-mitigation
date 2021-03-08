@@ -4,9 +4,9 @@ import logging
 import datetime
 import os
 import json
-import uuid
+from uuid import UUID
+from urllib import parse
 
-import mdutils.mdutils as mdu
 import anticrlf
 from veracode_api_py import VeracodeAPI as vapi, Applications, Findings
 
@@ -29,6 +29,27 @@ def creds_expire_days_warning():
     delta = exp - datetime.datetime.now().astimezone() #we get a datetime with timezone...
     if (delta.days < 7):
         print('These API credentials expire ', creds['expiration_ts'])
+
+def prompt_for_app(prompt_text):
+    appguid = ""
+    app_name_search = input(prompt_text)
+    app_candidates = vapi().get_app_by_name(parse.quote(app_name_search))
+    if len(app_candidates) == 0:
+        print("No matches were found!")
+    elif len(app_candidates) > 1:
+        print("Please choose an application:")
+        for idx, appitem in enumerate(app_candidates,start=1):
+            print("{}) {}".format(idx, appitem["profile"]["name"]))
+        i = input("Enter number: ")
+        try:
+            if 0 < int(i) <= len(app_candidates):
+                appguid = app_candidates[int(i)-1].get('guid')
+        except ValueError:
+            appguid = ""
+    else:
+        appguid = app_candidates[0].get('guid')
+
+    return appguid
 
 def allowed_file(filename):
   return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -119,7 +140,8 @@ def process_matched_findings(appguid, matched_findings, sandboxguid=None):
 def main():
     parser = argparse.ArgumentParser(
         description='This script lists modules in which static findings were identified.')
-    parser.add_argument('-a', '--applicationguid', help='Applications guid from which to retrieve mitigated findings', required=True)
+    parser.add_argument('-a', '--applicationguid', help='Applications guid from which to retrieve mitigated findings')
+    parser.add_argument('-p', '--prompt', action='store_true', help='Prompt for application using partial match search')
     parser.add_argument('-rf', '--results', help='Location of a Pipeline Scan results file from which the baseline file will be created.', required=True)
     parser.add_argument('-s', '--sandboxguid', help='Sandbox guid from which to retrieve mitigated findings in the application specified above')
     args = parser.parse_args()
@@ -127,6 +149,7 @@ def main():
     appguid = args.applicationguid
     rf = args.results
     sandboxguid = args.sandboxguid
+    prompt = args.prompt
 
     setup_logger()
 
@@ -136,6 +159,9 @@ def main():
     if not(allowed_file(rf)):
         print('{} is an invalid filename. --results must point to a json file.')
         return
+
+    if prompt:
+        appguid = prompt_for_app('Enter the application name from which to copy mitigations: ')
 
     if not(is_valid_uuid(appguid)):
         print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
