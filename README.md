@@ -1,6 +1,6 @@
 # Veracode Pipeline Mitigation
 
-Retrieves findings with approved mitigations from an application's policy scan (or sandbox) and creates a baseline file for Pipeline Scan.  
+Retrieves findings with APPROVED mitigations from an application's policy scan (or sandbox) and creates a baseline file for Pipeline Scan.  Mitigations in a "proposed" state will not be retrieved.
 
 ## Setup
 
