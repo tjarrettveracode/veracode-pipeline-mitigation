@@ -5,9 +5,9 @@ play.py
 *.xml
 *.log
 *.pdf
-vcpipemit.md
 veracode-plugin.conf
-baseline-*.json
+*.json
+pipeline-scan.jar
 
 # https://github.com/github/gitignore/blob/master/Python.gitignore
 

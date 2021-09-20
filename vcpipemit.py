@@ -5,7 +5,6 @@ import datetime
 import os
 import json
 from uuid import UUID
-from urllib import parse
 
 import anticrlf
 from veracode_api_py import VeracodeAPI as vapi, Applications, Findings
@@ -33,7 +32,7 @@ def creds_expire_days_warning():
 def prompt_for_app(prompt_text):
     appguid = ""
     app_name_search = input(prompt_text)
-    app_candidates = vapi().get_app_by_name(parse.quote(app_name_search))
+    app_candidates = vapi().get_app_by_name(app_name_search)
     if len(app_candidates) == 0:
         print("No matches were found!")
     elif len(app_candidates) > 1:
