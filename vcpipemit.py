@@ -106,7 +106,7 @@ def create_match_format_policy(policy_findings):
                 'source_file': pf['finding_details']['file_path'],
                 'line': pf['finding_details']['file_line_number']} for pf in policy_findings]
 
-def get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandboxguid=None):
+def get_matched_findings(appguid, mitigated_findings, pipeline_findings, use_no_base_file, sandboxguid=None):
     candidate_findings = []
 
     mitigated_index = create_match_format_policy(mitigated_findings)
@@ -126,9 +126,9 @@ def get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandbox
 
     return candidate_findings
     
-def process_matched_findings(appguid, matched_findings, sandboxguid=None):
+def process_matched_findings( matched_findings):
     # write matched findings to new baseline file
-    baselinefilename = 'baseline-{}.json'.format(appguid)
+    baselinefilename = 'baseline.json'
 
     bfcontent = {'findings': matched_findings}
 
@@ -136,25 +136,38 @@ def process_matched_findings(appguid, matched_findings, sandboxguid=None):
         f.write(json.dumps(bfcontent, indent=4))
         f.close()
 
+def get_app_by_name(appname, verbose):
+    applications = Applications().get_by_name(appname)
+    if (verbose):
+        print(applications)
+    if applications:
+        for index in range(len(applications)):
+            if applications[index]["profile"]["name"] == appname:
+                return applications[index]["guid"]
+    print(f"ERROR: unable to find application named {appname}")
+    sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(
         description='This script lists modules in which static findings were identified.')
-    parser.add_argument('-a', '--applicationguid', help='Applications guid from which to retrieve mitigated findings')
+    parser.add_argument('-a', '--application', help='Applications guid or name from which to retrieve mitigated findings')
     parser.add_argument('-p', '--prompt', action='store_true', help='Prompt for application using partial match search')
-    parser.add_argument('-rf', '--results', help='Location of a Pipeline Scan results file from which the baseline file will be created.', required=True)
+    parser.add_argument('-rf', '--results', help='Location of a Pipeline Scan results file from which the baseline file will be created.')
     parser.add_argument('-s', '--sandboxguid', help='Sandbox guid from which to retrieve mitigated findings in the application specified above')
+    parser.add_argument('-d', '--debug')
     args = parser.parse_args()
 
-    appguid = args.applicationguid
+    appguid = args.application
     rf = args.results
     sandboxguid = args.sandboxguid
     prompt = args.prompt
+    verbose = args.debug
 
     setup_logger()
 
     # CHECK FOR CREDENTIALS EXPIRATION
     creds_expire_days_warning()
-
+ 
     if not(allowed_file(rf)):
         print('{} is an invalid filename. --results must point to a json file.')
         return
@@ -163,8 +176,7 @@ def main():
         appguid = prompt_for_app('Enter the application name from which to copy mitigations: ')
 
     if not(is_valid_uuid(appguid)):
-        print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
-        return
+        appguid = get_app_by_name(appguid, verbose)
 
     all_findings = get_app_findings(appguid,sandboxguid)
 
@@ -174,7 +186,7 @@ def main():
 
     matched_findings = get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandboxguid)
 
-    process_matched_findings(appguid, matched_findings, sandboxguid)
+    process_matched_findings(matched_findings)
 
     status = "Processed {} matched findings. See log file for details".format(len(mitigated_findings))
     print(status)
