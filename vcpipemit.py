@@ -181,10 +181,7 @@ def main():
         appguid = get_app_by_name(appname, verbose)
     
     if not(is_valid_uuid(appguid)):
-        if (appname):
-            print('No application named {} was found. Please supply a valid application name.'.format(appname))
-        else:
-            print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
+        print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
         return
     
     if not(outputfilename):
