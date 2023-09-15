@@ -106,7 +106,7 @@ def create_match_format_policy(policy_findings):
                 'source_file': pf['finding_details']['file_path'],
                 'line': pf['finding_details']['file_line_number']} for pf in policy_findings]
 
-def get_matched_findings(appguid, mitigated_findings, pipeline_findings, use_no_base_file, sandboxguid=None):
+def get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandboxguid=None):
     candidate_findings = []
 
     mitigated_index = create_match_format_policy(mitigated_findings)
@@ -126,10 +126,8 @@ def get_matched_findings(appguid, mitigated_findings, pipeline_findings, use_no_
 
     return candidate_findings
     
-def process_matched_findings( matched_findings):
+def process_matched_findings(baselinefilename, matched_findings):
     # write matched findings to new baseline file
-    baselinefilename = 'baseline.json'
-
     bfcontent = {'findings': matched_findings}
 
     with open(baselinefilename, "w", newline='') as f:
@@ -150,17 +148,21 @@ def get_app_by_name(appname, verbose):
 def main():
     parser = argparse.ArgumentParser(
         description='This script lists modules in which static findings were identified.')
-    parser.add_argument('-a', '--application', help='Applications guid or name from which to retrieve mitigated findings')
+    parser.add_argument('-a', '--applicationguid', help='Applications guid from which to retrieve mitigated findings')
+    parser.add_argument('-an', '--applicationname', help='Applications name from which to retrieve mitigated findings')
     parser.add_argument('-p', '--prompt', action='store_true', help='Prompt for application using partial match search')
-    parser.add_argument('-rf', '--results', help='Location of a Pipeline Scan results file from which the baseline file will be created.')
+    parser.add_argument('-rf', '--results', help='Location of a Pipeline Scan results file from which the baseline file will be created.', required=True)
     parser.add_argument('-s', '--sandboxguid', help='Sandbox guid from which to retrieve mitigated findings in the application specified above')
+    parser.add_argument('-of', '--outputfilename', help='Name for the file to generate')
     parser.add_argument('-d', '--debug')
     args = parser.parse_args()
 
-    appguid = args.application
+    appguid = args.applicationguid
+    appname = args.applicationname
     rf = args.results
     sandboxguid = args.sandboxguid
     prompt = args.prompt
+    outputfilename = args.outputfilename
     verbose = args.debug
 
     setup_logger()
@@ -175,10 +177,20 @@ def main():
     if prompt:
         appguid = prompt_for_app('Enter the application name from which to copy mitigations: ')
 
+    if appname:
+        appguid = get_app_by_name(appname, verbose)
+    
     if not(is_valid_uuid(appguid)):
-        appguid = get_app_by_name(appguid, verbose)
+        if (appname):
+            print('No application named {} was found. Please supply a valid application name.'.format(appname))
+        else:
+            print('{} is an invalid application guid. Please supply a valid UUID.'.format(appguid))
+        return
+    
+    if not(outputfilename):
+        outputfilename = 'baseline-{}.json'.format(appguid)
 
-    all_findings = get_app_findings(appguid,sandboxguid)
+    all_findings = get_app_findings(appguid, sandboxguid)
 
     mitigated_findings = get_mitigated_findings(all_findings)
 
@@ -186,7 +198,7 @@ def main():
 
     matched_findings = get_matched_findings(appguid, mitigated_findings, pipeline_findings, sandboxguid)
 
-    process_matched_findings(matched_findings)
+    process_matched_findings(outputfilename, matched_findings)
 
     status = "Processed {} matched findings. See log file for details".format(len(mitigated_findings))
     print(status)
