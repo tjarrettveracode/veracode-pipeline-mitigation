@@ -38,7 +38,7 @@ Arguments supported include:
 * `--results`, `-rf` (required): Location of a Pipeline Scan results file from which the baseline file will be created.
 * `--sandbox`, `-s` (optional): Sandbox guid from which to retrieve mitigated findings in the application specified above.
 
-All actions are logged to `vcpipmit.log`. The baseline file is created in the current directory and is named `baseline_<appguid>.json`.
+All actions are logged to `vcpipmit.log`. The baseline file is created in the current directory and is named `baseline-<appguid>.json`.
 
 ## Notes
 
